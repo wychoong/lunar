@@ -91,54 +91,19 @@ class MediaRelationManager extends BaseRelationManager
                             ])
                             ->preservingOriginal()
                             ->toMediaCollection($this->mediaCollection);
-                    })->after(function ($record) {
-                        $owner = $this->getOwnerRecord();
-
-                        $collection = $owner->getMedia($this->mediaCollection);
-                        $collectionCount = $collection->count();
-                        $isPrimary = (bool) $record->getCustomProperty('primary');
-                        if ($isPrimary && $collectionCount > 1) {
-                            $collection->reject(fn ($media) => $media->id == $record->id || $media->getCustomProperty('primary') === false)
-                                ->each(fn ($media) => $media->setCustomProperty('primary', false)->save());
-                        } elseif (! $isPrimary && ($collectionCount == 1 || $collection->filter(fn ($media) => $media->getCustomProperty('primary') === true)->isEmpty())) {
-                            $record->setCustomProperty('primary', true)->save();
-                        }
-
-                        ModelMediaUpdated::dispatch($owner);
-                    }),
+                    })->after(
+                        fn () => ModelMediaUpdated::dispatch(
+                            $this->getOwnerRecord()
+                        )
+                    ),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->after(function ($record) {
-                        $owner = $this->getOwnerRecord();
-
-                        if ($record->getCustomProperty('primary')) {
-                            $owner->getMedia($this->mediaCollection)
-                                ->reject(fn ($media) => $media->id == $record->id || $media->getCustomProperty('primary') === false)
-                                ->each(fn ($media) => $media->setCustomProperty('primary', false)->save());
-                        } elseif ($owner->getMedia($this->mediaCollection)->count() == 1) {
-                            $record->setCustomProperty('primary', true)->save();
-                        } else {
-                            $owner->getMedia($this->mediaCollection)
-                                ->first(fn ($media) => $media->id != $record->id && $media->getCustomProperty('primary') === false)
-                                ->setCustomProperty('primary', true)
-                                ->save();
-                        }
-
-                        ModelMediaUpdated::dispatch($owner);
-                    }),
-                Tables\Actions\DeleteAction::make()
-                    ->after(function () {
-                        $owner = $this->getOwnerRecord();
-
-                        $collection = $owner->getMedia($this->mediaCollection);
-
-                        if ($collection->filter(fn ($media) => $media->getCustomProperty('primary') === true)->isEmpty()) {
-                            $collection->first()
-                                ->setCustomProperty('primary', true)
-                                ->save();
-                        }
-                    }),
+                Tables\Actions\EditAction::make()->after(
+                    fn () => ModelMediaUpdated::dispatch(
+                        $this->getOwnerRecord()
+                    )
+                ),
+                Tables\Actions\DeleteAction::make(),
                 Action::make('view_open')
                     ->label('View')
                     ->icon('lucide-eye')
@@ -147,19 +112,11 @@ class MediaRelationManager extends BaseRelationManager
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->after(function () {
-                        $owner = $this->getOwnerRecord();
-
-                        $collection = $owner->getMedia($this->mediaCollection);
-
-                        if ($collection->filter(fn ($media) => $media->getCustomProperty('primary') === true)->isEmpty()) {
-                            $collection->first()
-                                ->setCustomProperty('primary', true)
-                                ->save();
-                        }
-
-                        ModelMediaUpdated::dispatch($owner);
-                    }),
+                    Tables\Actions\DeleteBulkAction::make()->after(
+                        fn () => ModelMediaUpdated::dispatch(
+                            $this->getOwnerRecord()
+                        )
+                    ),
                 ]),
             ])
             ->reorderable('order_column');
