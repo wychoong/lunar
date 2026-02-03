@@ -8,6 +8,8 @@ return [
 
     'tabs' => [
         'all' => 'All',
+        'published' => 'Published',
+        'draft' => 'Draft',
     ],
 
     'status' => [
@@ -121,6 +123,7 @@ return [
         ],
         'collections' => [
             'label' => 'Collections',
+            'select_collection' => 'Select a collection',
         ],
         'associations' => [
             'label' => 'Product Associations',

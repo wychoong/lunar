@@ -11,6 +11,7 @@ use Filament\Support\Enums\FontWeight;
 use Illuminate\Support\Arr;
 use Lunar\Models\Contracts\OrderAddress as OrderAddressContract;
 use Lunar\Models\Country;
+use Lunar\Models\OrderAddress;
 use Lunar\Models\State;
 
 trait DisplaysOrderAddresses
@@ -52,6 +53,10 @@ trait DisplaysOrderAddresses
                 ]),
             Forms\Components\TextInput::make('company_name')
                 ->label(__('lunarpanel::order.form.address.company_name.label'))
+                ->autocomplete(false)
+                ->maxLength(255),
+            Forms\Components\TextInput::make('tax_identifier')
+                ->label(__('lunarpanel::order.form.address.tax_identifier.label'))
                 ->autocomplete(false)
                 ->maxLength(255),
             Forms\Components\Grid::make()
@@ -138,6 +143,7 @@ trait DisplaysOrderAddresses
                         if ($address?->id ?? false) {
                             return collect([
                                 'company_name' => $address->company_name,
+                                'tax_identifier' => $address->tax_identifier,
                                 'fullName' => $address->fullName,
                                 'line_one' => $address->line_one,
                                 'line_two' => $address->line_two,
@@ -202,8 +208,8 @@ trait DisplaysOrderAddresses
             ->label(__('lunarpanel::order.action.edit_address.label'))
             ->button()
             ->fillForm(fn ($record) => match ($type) {
-                'shipping' => $record->shippingAddress->toArray(),
-                'billing' => $record->billingAddress->toArray(),
+                'shipping' => $record->shippingAddress?->toArray() ?: [],
+                'billing' => $record->billingAddress?->toArray() ?: [],
                 default => []
             })
             ->form(function () {
@@ -225,8 +231,16 @@ trait DisplaysOrderAddresses
                     return;
                 }
 
-                $oldData = $record->$addressType->toArray();
+                $oldData = $record->$addressType?->toArray() ?: [];
                 $formFields = array_keys($data);
+
+                if (! $record->$addressType) {
+                    $record->$addressType = (new OrderAddress)->forceFill($data);
+                    $record->$addressType->type = $type;
+                }
+
+                $record->$addressType->order_id = $record->id;
+                $record->$addressType->id ? $record->$addressType->update($data) : $record->$addressType->save();
 
                 $record->$addressType->order_id = $record->id;
                 $record->$addressType->update($data);

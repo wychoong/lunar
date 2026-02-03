@@ -248,11 +248,11 @@ return [
             ],
         ],
         'rewards' => [
-            'title' => 'Product Rewards',
+            'title' => 'Rewards',
             'description' => 'Select which products will be discounted if they exist in the cart and the above conditions are met.',
             'actions' => [
                 'attach' => [
-                    'label' => 'Add Product',
+                    'label' => 'Add Reward',
                 ],
             ],
             'table' => [
@@ -283,11 +283,11 @@ return [
             ],
         ],
         'conditions' => [
-            'title' => 'Product Conditions',
-            'description' => 'Select the products required for the discount to apply.',
+            'title' => 'Product and Variant Conditions',
+            'description' => 'Select the product or variant conditions required for the discount to apply.',
             'actions' => [
                 'attach' => [
-                    'label' => 'Add Product',
+                    'label' => 'Add Condition',
                 ],
             ],
             'table' => [
@@ -314,6 +314,20 @@ return [
                             'label' => 'Exclusion',
                         ],
                     ],
+                ],
+            ],
+        ],
+        'collection_conditions' => [
+            'title' => 'Collection Conditions',
+            'description' => 'Select the collection conditions required for the discount to apply.',
+            'actions' => [
+                'attach' => [
+                    'label' => 'Add Condition',
+                ],
+            ],
+            'table' => [
+                'name' => [
+                    'label' => 'Name',
                 ],
             ],
         ],

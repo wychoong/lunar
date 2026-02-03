@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Lunar\Base\BaseModel;
 use Lunar\Base\Casts\AsAttributeData;
+use Lunar\Base\Enums\Concerns\ProvidesProductAssociationType;
+use Lunar\Base\HasThumbnailImage;
 use Lunar\Base\Traits\HasChannels;
 use Lunar\Base\Traits\HasCustomerGroups;
 use Lunar\Base\Traits\HasMacros;
@@ -39,7 +41,7 @@ use Spatie\MediaLibrary\HasMedia as SpatieHasMedia;
  * @property ?\Illuminate\Support\Carbon $updated_at
  * @property ?\Illuminate\Support\Carbon $deleted_at
  */
-class Product extends BaseModel implements Contracts\Product, SpatieHasMedia
+class Product extends BaseModel implements Contracts\Product, HasThumbnailImage, SpatieHasMedia
 {
     use HasChannels;
     use HasCustomerGroups;
@@ -143,7 +145,7 @@ class Product extends BaseModel implements Contracts\Product, SpatieHasMedia
         return $this->hasMany(ProductAssociation::modelClass(), 'product_target_id');
     }
 
-    public function associate(mixed $product, string $type): void
+    public function associate(mixed $product, ProvidesProductAssociationType|string $type): void
     {
         Associate::dispatch($this, $product, $type);
     }
@@ -151,7 +153,7 @@ class Product extends BaseModel implements Contracts\Product, SpatieHasMedia
     /**
      * Dissociate a product to another with a type.
      */
-    public function dissociate(mixed $product, ?string $type = null): void
+    public function dissociate(mixed $product, ProvidesProductAssociationType|string|null $type = null): void
     {
         Dissociate::dispatch($this, $product, $type);
     }
@@ -210,5 +212,10 @@ class Product extends BaseModel implements Contracts\Product, SpatieHasMedia
             ProductOption::modelClass(),
             "{$prefix}product_product_option"
         )->withPivot(['position'])->orderByPivot('position');
+    }
+
+    public function getThumbnailImage(): string
+    {
+        return $this->thumbnail?->getUrl('small') ?? '';
     }
 }
