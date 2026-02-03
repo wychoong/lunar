@@ -75,6 +75,96 @@ it('will not show in navigation when multiple variants exist', function () {
         );
 });
 
+it('will show in navigation when product has soft-deleted variants but only one active variant', function () {
+    \Lunar\Models\Language::factory()->create([
+        'default' => true,
+    ]);
+
+    \Lunar\Models\Currency::factory()->create([
+        'default' => true,
+    ]);
+
+    $record = \Lunar\Models\Product::factory()->create();
+
+    // Create an active variant
+    \Lunar\Models\ProductVariant::factory()->create([
+        'product_id' => $record->id,
+    ]);
+
+    // Create a soft-deleted variant
+    \Lunar\Models\ProductVariant::factory()->create([
+        'product_id' => $record->id,
+        'deleted_at' => now(),
+    ]);
+
+    $this->asStaff(admin: true)
+        ->get(\Lunar\Admin\Filament\Resources\ProductResource::getUrl('edit', [
+            'record' => $record,
+        ]))
+        ->assertSuccessful()
+        ->assertSeeText(
+            __('lunarpanel::product.pages.identifiers.label')
+        );
+});
+
+it('will show in navigation for soft-deleted product with single trashed variant', function () {
+    \Lunar\Models\Language::factory()->create([
+        'default' => true,
+    ]);
+
+    \Lunar\Models\Currency::factory()->create([
+        'default' => true,
+    ]);
+
+    $record = \Lunar\Models\Product::factory()->create([
+        'deleted_at' => now(),
+    ]);
+
+    // Create a soft-deleted variant (since product is trashed)
+    \Lunar\Models\ProductVariant::factory()->create([
+        'product_id' => $record->id,
+        'deleted_at' => now(),
+    ]);
+
+    $this->asStaff(admin: true)
+        ->get(\Lunar\Admin\Filament\Resources\ProductResource::getUrl('edit', [
+            'record' => $record,
+        ]))
+        ->assertSuccessful()
+        ->assertSeeText(
+            __('lunarpanel::product.pages.identifiers.label')
+        );
+});
+
+it('will not show in navigation for soft-deleted product with multiple trashed variants', function () {
+    \Lunar\Models\Language::factory()->create([
+        'default' => true,
+    ]);
+
+    \Lunar\Models\Currency::factory()->create([
+        'default' => true,
+    ]);
+
+    $record = \Lunar\Models\Product::factory()->create([
+        'deleted_at' => now(),
+    ]);
+
+    // Create multiple soft-deleted variants
+    \Lunar\Models\ProductVariant::factory(2)->create([
+        'product_id' => $record->id,
+        'deleted_at' => now(),
+    ]);
+
+    $this->asStaff(admin: true)
+        ->get(\Lunar\Admin\Filament\Resources\ProductResource::getUrl('edit', [
+            'record' => $record,
+        ]))
+        ->assertSuccessful()
+        ->assertDontSeeText(
+            __('lunarpanel::product.pages.identifiers.label')
+        );
+});
+
 it('can update variant identifiers', function () {
     $language = \Lunar\Models\Language::factory()->create([
         'default' => true,

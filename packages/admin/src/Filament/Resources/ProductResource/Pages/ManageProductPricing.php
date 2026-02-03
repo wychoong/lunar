@@ -30,12 +30,18 @@ class ManageProductPricing extends BaseEditRecord
 
     public static function shouldRegisterNavigation(array $parameters = []): bool
     {
-        return $parameters['record']->variants()->withTrashed()->count() == 1;
+        $record = $parameters['record'];
+        $query = $record->trashed() ? $record->variants()->withTrashed() : $record->variants();
+
+        return $query->count() == 1;
     }
 
     public function getOwnerRecord(): Model
     {
-        return $this->getRecord()->variants()->withTrashed()->first();
+        $record = $this->getRecord();
+        $query = $record->trashed() ? $record->variants()->withTrashed() : $record->variants();
+
+        return $query->first();
     }
 
     public function form(Form $form): Form
