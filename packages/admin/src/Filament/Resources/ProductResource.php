@@ -254,7 +254,8 @@ class ProductResource extends BaseResource
                 ]),
             ])
             ->selectCurrentPageOnly()
-            ->deferLoading();
+            ->deferLoading()
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('variants'));
     }
 
     public static function getTableColumns(): array
@@ -389,8 +390,7 @@ class ProductResource extends BaseResource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ])
-            ->withCount('variants');
+            ]);
     }
 
     public static function getGlobalSearchEloquentQuery(): Builder

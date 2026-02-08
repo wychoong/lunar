@@ -30,6 +30,5 @@ class ProductObserver
 
             $product->tags()->detach();
         }
-        // Soft deleting a product does NOT affect variants
     }
 }
