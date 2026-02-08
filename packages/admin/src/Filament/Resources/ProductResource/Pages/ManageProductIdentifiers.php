@@ -36,10 +36,7 @@ class ManageProductIdentifiers extends BaseEditRecord
 
     public static function shouldRegisterNavigation(array $parameters = []): bool
     {
-        $record = $parameters['record'];
-        $query = $record->trashed() ? $record->variants()->withTrashed() : $record->variants();
-
-        return $query->count() == 1;
+        return $parameters['record']->variants()->count() <= 1;
     }
 
     public function getBreadcrumb(): string
@@ -81,10 +78,7 @@ class ManageProductIdentifiers extends BaseEditRecord
 
     protected function getVariant(): ProductVariantContract
     {
-        $record = $this->getRecord();
-        $query = $record->trashed() ? $record->variants()->withTrashed() : $record->variants();
-
-        return $query->first();
+        return $this->getRecord()->variants()->first();
     }
 
     protected function getFormActions(): array

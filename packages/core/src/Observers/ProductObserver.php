@@ -7,7 +7,7 @@ use Lunar\Models\Contracts\Product as ProductContract;
 class ProductObserver
 {
     /**
-     * Handle the ProductVariant "deleted" event.
+     * Handle the Product "deleting" event.
      */
     public function deleting(ProductContract $product): void
     {
@@ -29,13 +29,7 @@ class ProductObserver
             $product->channels()->detach();
 
             $product->tags()->detach();
-        } else {
-            $product->variants()->get()->each->delete();
         }
-    }
-
-    public function restored(ProductContract $product): void
-    {
-        $product->variants()->withTrashed()->get()->each->restore();
+        // Soft deleting a product does NOT affect variants
     }
 }
