@@ -35,7 +35,9 @@ class ManageProductPricing extends BaseEditRecord
 
     public function getOwnerRecord(): Model
     {
-        return $this->getRecord()->variants()->first();
+        $record = $this->getRecord();
+
+        return $record->variants()->first() ?? $record->variants()->withTrashed()->first();
     }
 
     public function form(Form $form): Form

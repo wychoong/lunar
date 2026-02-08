@@ -107,7 +107,9 @@ class ManageProductShipping extends BaseEditRecord
 
     protected function getVariant(): ProductVariantContract
     {
-        return $this->getRecord()->variants()->first();
+        $record = $this->getRecord();
+
+        return $record->variants()->first() ?? $record->variants()->withTrashed()->first();
     }
 
     protected function getFormActions(): array
