@@ -389,7 +389,8 @@ class ProductResource extends BaseResource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->withCount('variants');
     }
 
     public static function getGlobalSearchEloquentQuery(): Builder
