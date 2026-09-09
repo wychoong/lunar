@@ -65,7 +65,7 @@ return new class extends Migration
         $this->stampTimestamps($orders, $closed, $cancelled);
 
         // SQLite refuses DROP COLUMN while the v1 `status` index remains.
-        $this->dropIndexIfExists($orders, ['status']);
+        $this->dropIndexesForColumns($orders, ['status']);
 
         Schema::table($orders, function (Blueprint $table) {
             $table->dropColumn('status');

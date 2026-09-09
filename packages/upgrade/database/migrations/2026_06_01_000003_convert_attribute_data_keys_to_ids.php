@@ -323,7 +323,7 @@ return new class extends Migration
 
         if (Schema::hasColumn($table, 'attributable_type')) {
             // SQLite refuses DROP COLUMN while the v1 index remains.
-            $this->dropIndexIfExists($table, ['attributable_type']);
+            $this->dropIndexesForColumns($table, ['attributable_type']);
 
             Schema::table($table, function (Blueprint $table) {
                 $table->dropColumn('attributable_type');
@@ -400,9 +400,9 @@ return new class extends Migration
 
         if ($drops !== []) {
             if (in_array('attribute_type', $drops, true)) {
-                // MariaDB 1072 / SQLite: DROP COLUMN fails while these remain.
-                $this->dropIndexIfExists($table, ['attribute_type', 'handle'], 'unique');
-                $this->dropIndexIfExists($table, ['attribute_type']);
+                // MariaDB 1072 / SQLite: DROP COLUMN fails while these remain
+                // (the unique `(attribute_type, handle)` and the morph index).
+                $this->dropIndexesForColumns($table, ['attribute_type']);
             }
 
             Schema::table($table, function (Blueprint $blueprint) use ($drops) {

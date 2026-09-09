@@ -8,7 +8,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Drop a live index by its reported name so a later `dropColumn` can succeed.
+ * Drop live indexes by their reported name so a later `dropColumn` can succeed.
  *
  * SQLite refuses `DROP COLUMN` while any index still references the column.
  * MariaDB errors 1072 (`Key column doesn't exist in table`). MySQL 8 and
@@ -20,19 +20,25 @@ use Illuminate\Support\Facades\Schema;
 trait DropsIndexes
 {
     /**
+     * Drop every non-primary index that includes any of the given columns.
+     *
+     * Use this immediately before `dropColumn`.
+     *
      * @param  list<string>  $columns
      */
-    protected function dropIndexIfExists(string $table, array $columns, string $type = 'index'): void
+    protected function dropIndexesForColumns(string $table, array $columns): void
     {
-        $wantUnique = $type === 'unique';
-
         foreach (Schema::getIndexes($table) as $index) {
-            if ($index['columns'] !== $columns || (bool) $index['unique'] !== $wantUnique) {
+            if (($index['primary'] ?? false) === true) {
                 continue;
             }
 
-            Schema::table($table, function (Blueprint $blueprint) use ($index, $wantUnique): void {
-                if ($wantUnique) {
+            if (array_intersect($index['columns'], $columns) === []) {
+                continue;
+            }
+
+            Schema::table($table, function (Blueprint $blueprint) use ($index): void {
+                if ($index['unique']) {
                     $blueprint->dropUnique($index['name']);
 
                     return;
@@ -40,8 +46,6 @@ trait DropsIndexes
 
                 $blueprint->dropIndex($index['name']);
             });
-
-            return;
         }
     }
 }
