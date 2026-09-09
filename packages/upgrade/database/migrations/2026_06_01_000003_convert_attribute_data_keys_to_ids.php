@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lunar\Core\Database\Migration;
 use Lunar\Core\Facades\DB;
-use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 → v2 upgrade data step (spec 0019): reshape attribute storage.
@@ -33,8 +32,6 @@ use Lunar\Upgrade\Support\DropsIndexes;
  */
 return new class extends Migration
 {
-    use DropsIndexes;
-
     /**
      * Tables carrying an `attribute_data` JSON column, and the morph aliases /
      * v2 FQCNs the v1 `attributes.attribute_type` column would have stored
@@ -322,7 +319,11 @@ return new class extends Migration
         }
 
         if (Schema::hasColumn($table, 'attributable_type')) {
-            $this->dropIndexIfExists($table, ['attributable_type']);
+            if (Schema::hasIndex($table, ['attributable_type'])) {
+                Schema::table($table, function (Blueprint $table) {
+                    $table->dropIndex(['attributable_type']);
+                });
+            }
 
             Schema::table($table, function (Blueprint $table) {
                 $table->dropColumn('attributable_type');
@@ -399,8 +400,17 @@ return new class extends Migration
 
         if ($drops !== []) {
             if (in_array('attribute_type', $drops, true)) {
-                $this->dropUniqueIfExists($table, ['attribute_type', 'handle']);
-                $this->dropIndexIfExists($table, ['attribute_type']);
+                if (Schema::hasIndex($table, ['attribute_type', 'handle'])) {
+                    Schema::table($table, function (Blueprint $blueprint) {
+                        $blueprint->dropUnique(['attribute_type', 'handle']);
+                    });
+                }
+
+                if (Schema::hasIndex($table, ['attribute_type'])) {
+                    Schema::table($table, function (Blueprint $blueprint) {
+                        $blueprint->dropIndex(['attribute_type']);
+                    });
+                }
             }
 
             Schema::table($table, function (Blueprint $blueprint) use ($drops) {

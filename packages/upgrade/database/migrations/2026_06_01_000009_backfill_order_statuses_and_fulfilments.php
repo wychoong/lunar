@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lunar\Core\Database\Migration;
-use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 → v2 upgrade data step (spec 0022): replace the hand-driven v1 headline
@@ -38,8 +37,6 @@ use Lunar\Upgrade\Support\DropsIndexes;
  */
 return new class extends Migration
 {
-    use DropsIndexes;
-
     public function up(): void
     {
         $orders = $this->prefix.'orders';
@@ -64,7 +61,11 @@ return new class extends Migration
         $this->derivePaymentStatus($orders);
         $this->stampTimestamps($orders, $closed, $cancelled);
 
-        $this->dropIndexIfExists($orders, ['status']);
+        if (Schema::hasIndex($orders, ['status'])) {
+            Schema::table($orders, function (Blueprint $table) {
+                $table->dropIndex(['status']);
+            });
+        }
 
         Schema::table($orders, function (Blueprint $table) {
             $table->dropColumn('status');

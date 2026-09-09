@@ -4,7 +4,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Lunar\Core\Database\Migration;
-use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 -> v2 upgrade data step (spec 0038): move the flat `product_variants.stock`
@@ -25,8 +24,6 @@ use Lunar\Upgrade\Support\DropsIndexes;
  */
 return new class extends Migration
 {
-    use DropsIndexes;
-
     public function up(): void
     {
         $variants = $this->prefix.'product_variants';
@@ -42,7 +39,11 @@ return new class extends Migration
 
         $this->backfill($variants, $this->defaultLocationId());
 
-        $this->dropIndexIfExists($variants, ['stock']);
+        if (Schema::hasIndex($variants, ['stock'])) {
+            Schema::table($variants, function (Blueprint $table) {
+                $table->dropIndex(['stock']);
+            });
+        }
 
         Schema::table($variants, function (Blueprint $table) {
             $table->dropColumn('stock');

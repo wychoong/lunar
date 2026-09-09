@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Lunar\Core\Database\Migration;
-use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 → v2 upgrade data step: reconcile the models that dropped SoftDeletes.
@@ -32,8 +32,6 @@ use Lunar\Upgrade\Support\DropsIndexes;
  */
 return new class extends Migration
 {
-    use DropsIndexes;
-
     public function up(): void
     {
         // [table (unprefixed), v2 "hidden" column, value written for soft-deleted rows]
@@ -55,9 +53,13 @@ return new class extends Migration
                 ->whereNotNull('deleted_at')
                 ->update([$column => $hidden]);
 
-            $this->dropIndexIfExists($table, ['deleted_at']);
+            if (Schema::hasIndex($table, ['deleted_at'])) {
+                Schema::table($table, function (Blueprint $blueprint) {
+                    $blueprint->dropIndex(['deleted_at']);
+                });
+            }
 
-            Schema::table($table, function ($blueprint) {
+            Schema::table($table, function (Blueprint $blueprint) {
                 $blueprint->dropColumn('deleted_at');
             });
         }
