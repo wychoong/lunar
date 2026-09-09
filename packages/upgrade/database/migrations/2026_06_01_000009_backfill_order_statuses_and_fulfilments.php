@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lunar\Core\Database\Migration;
+use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 → v2 upgrade data step (spec 0022): replace the hand-driven v1 headline
@@ -37,6 +38,8 @@ use Lunar\Core\Database\Migration;
  */
 return new class extends Migration
 {
+    use DropsIndexes;
+
     public function up(): void
     {
         $orders = $this->prefix.'orders';
@@ -60,6 +63,9 @@ return new class extends Migration
         $this->createFulfilments($orders, $fulfilled);
         $this->derivePaymentStatus($orders);
         $this->stampTimestamps($orders, $closed, $cancelled);
+
+        // SQLite refuses DROP COLUMN while the v1 `status` index remains.
+        $this->dropIndexIfExists($orders, ['status']);
 
         Schema::table($orders, function (Blueprint $table) {
             $table->dropColumn('status');

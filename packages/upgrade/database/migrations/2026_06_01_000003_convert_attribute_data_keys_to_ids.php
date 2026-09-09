@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lunar\Core\Database\Migration;
 use Lunar\Core\Facades\DB;
+use Lunar\Upgrade\Support\DropsIndexes;
 
 /**
  * v1 → v2 upgrade data step (spec 0019): reshape attribute storage.
@@ -32,6 +33,8 @@ use Lunar\Core\Facades\DB;
  */
 return new class extends Migration
 {
+    use DropsIndexes;
+
     /**
      * Tables carrying an `attribute_data` JSON column, and the morph aliases /
      * v2 FQCNs the v1 `attributes.attribute_type` column would have stored
@@ -412,35 +415,6 @@ return new class extends Migration
             Schema::table($table, function (Blueprint $blueprint) {
                 $blueprint->unsignedBigInteger('attribute_group_id')->nullable()->change();
             });
-        }
-    }
-
-    /**
-     * Drop a v1 index by its live name. `Schema::hasIndex(..., 'index')` misses
-     * SQLite, which reports the type as `btree` rather than `index`.
-     *
-     * @param  list<string>  $columns
-     */
-    protected function dropIndexIfExists(string $table, array $columns, string $type = 'index'): void
-    {
-        $wantUnique = $type === 'unique';
-
-        foreach (Schema::getIndexes($table) as $index) {
-            if ($index['columns'] !== $columns || (bool) $index['unique'] !== $wantUnique) {
-                continue;
-            }
-
-            Schema::table($table, function (Blueprint $blueprint) use ($index, $wantUnique): void {
-                if ($wantUnique) {
-                    $blueprint->dropUnique($index['name']);
-
-                    return;
-                }
-
-                $blueprint->dropIndex($index['name']);
-            });
-
-            return;
         }
     }
 
