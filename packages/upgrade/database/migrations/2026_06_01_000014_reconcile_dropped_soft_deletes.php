@@ -55,9 +55,7 @@ return new class extends Migration
                 ->whereNotNull('deleted_at')
                 ->update([$column => $hidden]);
 
-            // v1.5 indexes `products.deleted_at` and `product_variants.deleted_at`;
-            // SQLite refuses DROP COLUMN while those remain.
-            $this->dropIndexesForColumns($table, ['deleted_at']);
+            $this->dropIndexIfExists($table, ['deleted_at']);
 
             Schema::table($table, function ($blueprint) {
                 $blueprint->dropColumn('deleted_at');

@@ -42,8 +42,7 @@ return new class extends Migration
 
         $this->backfill($variants, $this->defaultLocationId());
 
-        // SQLite refuses DROP COLUMN while the v1 `stock` index remains.
-        $this->dropIndexesForColumns($variants, ['stock']);
+        $this->dropIndexIfExists($variants, ['stock']);
 
         Schema::table($variants, function (Blueprint $table) {
             $table->dropColumn('stock');
